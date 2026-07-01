@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dhairya Panchal — Linux / DevOps / SRE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0B0F14;
+    --bg-raised: #10151C;
+    --surface: #151B23;
+    --surface-hover: #1B222C;
+    --line: #232B36;
+    --text: #E6EDF3;
+    --text-dim: #8B96A5;
+    --text-faint: #56626F;
+    --green: #7EE787;
+    --amber: #FFA657;
+    --red: #FF7B72;
+    --blue: #79C0FF;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(126,231,135,0.05), transparent 40%),
+      radial-gradient(circle at 85% 60%, rgba(121,192,255,0.04), transparent 45%);
+    pointer-events:none;
+    z-index:0;
+  }
+  a{color:inherit;text-decoration:none;}
+  .wrap{max-width:920px;margin:0 auto;padding:0 28px;position:relative;z-index:1;}
+
+  /* SCANLINE / GRID TEXTURE */
+  .grid-overlay{
+    position:fixed; inset:0; pointer-events:none; z-index:0; opacity:0.35;
+    background-image:
+      linear-gradient(rgba(126,231,135,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(126,231,135,0.025) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 20%, transparent 75%);
+  }
+
+  /* NAV */
+  header{
+    position:fixed; top:0; left:0; right:0; z-index:50;
+    backdrop-filter: blur(10px);
+    background: rgba(11,15,20,0.75);
+    border-bottom:1px solid var(--line);
+  }
+  nav{
+    max-width:920px;margin:0 auto;padding:16px 28px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .brand{
+    font-family:var(--mono); font-weight:700; font-size:14px; color:var(--text);
+    display:flex; align-items:center; gap:8px;
+  }
+  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+  .navlinks{display:flex; gap:26px; font-family:var(--mono); font-size:12.5px; color:var(--text-dim);}
+  .navlinks a{transition:color .2s;}
+  .navlinks a:hover{color:var(--green);}
+  .navlinks a::before{content:'~/';color:var(--text-faint);}
+  .nav-toggle{display:none;}
+  @media (max-width:700px){
+    .navlinks{display:none;}
+  }
+
+  /* HERO */
+  .hero{
+    padding:150px 0 90px;
+    position:relative; z-index:1;
+  }
+  .hero-kicker{
+    font-family:var(--mono); font-size:12.5px; color:var(--green);
+    display:flex; align-items:center; gap:10px; margin-bottom:22px;
+    letter-spacing:0.5px;
+  }
+  .hero-kicker .bar{width:26px;height:1px;background:var(--green);}
+
+  .terminal{
+    background:var(--bg-raised);
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+    box-shadow:0 20px 60px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(126,231,135,0.03);
+  }
+  .term-bar{
+    display:flex; align-items:center; gap:8px;
+    padding:11px 16px;
+    background:var(--surface);
+    border-bottom:1px solid var(--line);
+  }
+  .term-bar span{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-bar span:nth-child(1){background:#FF5F56;}
+  .term-bar span:nth-child(2){background:#FFBD2E;}
+  .term-bar span:nth-child(3){background:#27C93F;}
+  .term-title{
+    margin-left:8px; font-family:var(--mono); font-size:12px; color:var(--text-faint);
+  }
+  .term-body{padding:28px 26px 34px; font-family:var(--mono); font-size:14.5px;}
+  .term-line{margin-bottom:6px; color:var(--text-dim);}
+  .term-line .prompt{color:var(--green);}
+  .term-line .path{color:var(--blue);}
+  .term-out{color:var(--text); margin:4px 0 18px;}
+  .hero-name{
+    font-size:clamp(38px, 6vw, 58px);
+    font-weight:800; line-height:1.05; letter-spacing:-0.02em;
+    margin:2px 0 10px; font-family:var(--mono);
+  }
+  .hero-role{
+    font-size:16px; color:var(--text-dim); margin-bottom:20px; max-width:560px;
+  }
+  .hero-role .accent{color:var(--amber);}
+  .cursor{
+    display:inline-block; width:9px; height:18px; background:var(--green);
+    animation: blink 1s steps(1) infinite; vertical-align:-3px;
+  }
+  @keyframes blink{50%{opacity:0;}}
+
+  .hero-meta{
+    display:flex; flex-wrap:wrap; gap:10px; margin-top:22px;
+  }
+  .chip{
+    font-family:var(--mono); font-size:12px; color:var(--text-dim);
+    border:1px solid var(--line); padding:6px 12px; border-radius:6px;
+    display:flex; align-items:center; gap:7px; background:var(--surface);
+  }
+  .chip svg{width:13px;height:13px;stroke:var(--green);flex-shrink:0;}
+
+  .cta-row{display:flex; gap:12px; margin-top:30px; flex-wrap:wrap;}
+  .btn{
+    font-family:var(--mono); font-size:13px; font-weight:600;
+    padding:11px 20px; border-radius:7px; border:1px solid var(--line);
+    transition:all .2s; display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn-primary{background:var(--green); color:#0B0F14; border-color:var(--green);}
+  .btn-primary:hover{background:#8FF29A; transform:translateY(-1px);}
+  .btn-ghost{color:var(--text); background:var(--surface);}
+  .btn-ghost:hover{border-color:var(--green); color:var(--green);}
+
+  /* SECTION SHARED */
+  section{padding:80px 0; position:relative; z-index:1;}
+  .section-head{margin-bottom:36px;}
+  .eyebrow{
+    font-family:var(--mono); font-size:12px; color:var(--text-faint);
+    display:flex; align-items:center; gap:10px; margin-bottom:10px;
+  }
+  .eyebrow::before{content:'$';color:var(--green);}
+  h2{
+    font-size:clamp(24px,3.5vw,32px); font-weight:800; font-family:var(--mono);
+    letter-spacing:-0.01em;
+  }
+  h2 .dim{color:var(--text-faint); font-weight:500;}
+
+  /* ABOUT — config block */
+  .about-box{
+    background:var(--surface); border:1px solid var(--line); border-radius:10px;
+    padding:28px 30px; font-family:var(--mono); font-size:14px; color:var(--text-dim);
+    position:relative;
+  }
+  .about-box .comment{color:var(--text-faint);}
+  .about-box .key{color:var(--blue);}
+  .about-box .val{color:var(--text);}
+  .about-box p{font-family:var(--sans); font-size:15.5px; color:var(--text); line-height:1.75; margin-top:16px;}
+
+  /* EXPERIENCE — systemctl status */
+  .svc{
+    border:1px solid var(--line); border-radius:10px; background:var(--surface);
+    margin-bottom:18px; overflow:hidden; transition:border-color .2s;
+  }
+  .svc:hover{border-color:#2E3846;}
+  .svc-head{
+    padding:18px 22px; display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:10px; border-bottom:1px solid var(--line);
+  }
+  .svc-title-wrap{display:flex; align-items:center; gap:12px;}
+  .svc-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .svc-dot.active{background:var(--green); box-shadow:0 0 10px var(--green); animation:pulse 2s infinite;}
+  .svc-dot.done{background:var(--text-faint);}
+  .svc-name{font-family:var(--mono); font-weight:700; font-size:15px;}
+  .svc-org{color:var(--text-dim); font-weight:500;}
+  .svc-status{
+    font-family:var(--mono); font-size:11px; padding:4px 10px; border-radius:20px;
+    text-transform:uppercase; letter-spacing:0.5px;
+  }
+  .svc-status.active{background:rgba(126,231,135,0.12); color:var(--green); border:1px solid rgba(126,231,135,0.3);}
+  .svc-status.done{background:rgba(139,150,165,0.1); color:var(--text-dim); border:1px solid var(--line);}
+  .svc-meta{
+    font-family:var(--mono); font-size:12px; color:var(--text-faint); padding:14px 22px 0;
+  }
+  .svc-log{padding:14px 22px 20px;}
+  .log-line{
+    display:flex; gap:10px; font-size:14.5px; color:var(--text-dim); margin-bottom:10px;
+    padding-left:2px;
+  }
+  .log-line:last-child{margin-bottom:0;}
+  .log-line::before{content:'›'; color:var(--green); font-family:var(--mono); flex-shrink:0;}
+
+  /* PROJECTS — ls -la listing */
+  .filelist{
+    font-family:var(--mono); font-size:12px; color:var(--text-faint);
+    margin-bottom:14px; padding-left:2px;
+  }
+  .proj-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media (max-width:700px){.proj-grid{grid-template-columns:1fr;}}
+  .proj-card{
+    border:1px solid var(--line); border-radius:10px; background:var(--surface);
+    padding:22px; transition:transform .2s, border-color .2s;
+  }
+  .proj-card:hover{transform:translateY(-3px); border-color:rgba(126,231,135,0.35);}
+  .proj-top{display:flex; align-items:center; gap:8px; margin-bottom:12px;}
+  .proj-top svg{width:15px;height:15px;stroke:var(--amber);}
+  .proj-file{font-family:var(--mono); font-size:12px; color:var(--text-faint);}
+  .proj-name{font-weight:700; font-size:16.5px; margin-bottom:10px; font-family:var(--mono); line-height:1.3;}
+  .proj-desc{font-size:14px; color:var(--text-dim); margin-bottom:16px;}
+  .tag-row{display:flex; flex-wrap:wrap; gap:6px;}
+  .tag{
+    font-family:var(--mono); font-size:11px; color:var(--blue);
+    background:rgba(121,192,255,0.08); border:1px solid rgba(121,192,255,0.2);
+    padding:3px 9px; border-radius:5px;
+  }
+
+  /* SKILLS — package manager */
+  .skill-groups{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media (max-width:700px){.skill-groups{grid-template-columns:1fr;}}
+  .skill-box{
+    border:1px solid var(--line); background:var(--surface); border-radius:10px; padding:20px 22px;
+  }
+  .skill-box h3{
+    font-family:var(--mono); font-size:13px; color:var(--green); margin-bottom:14px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .skill-box h3::before{content:'▸';}
+  .pkg-list{display:flex; flex-wrap:wrap; gap:8px;}
+  .pkg{
+    font-family:var(--mono); font-size:12.5px; color:var(--text-dim);
+    background:var(--bg-raised); border:1px solid var(--line); padding:6px 11px; border-radius:6px;
+    transition:all .2s;
+  }
+  .pkg:hover{color:var(--text); border-color:var(--text-faint);}
+
+  /* CERTS */
+  .cert-row{display:flex; flex-wrap:wrap; gap:12px;}
+  .cert{
+    display:flex; align-items:center; gap:10px;
+    border:1px solid var(--line); background:var(--surface); border-radius:8px;
+    padding:12px 16px; font-size:13.5px; flex:1 1 260px;
+  }
+  .cert svg{width:18px;height:18px;stroke:var(--amber); flex-shrink:0;}
+
+  /* EDU / COMMUNITY split */
+  .split{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  @media (max-width:700px){.split{grid-template-columns:1fr;}}
+  .info-box{border:1px solid var(--line); background:var(--surface); border-radius:10px; padding:22px 24px;}
+  .info-box h3{font-family:var(--mono); font-size:14px; margin-bottom:6px;}
+  .info-box .sub{color:var(--text-dim); font-size:13.5px; margin-bottom:4px;}
+  .info-box .when{font-family:var(--mono); font-size:11.5px; color:var(--text-faint);}
+  .info-box ul{margin-top:12px; padding-left:0; list-style:none;}
+  .info-box li{font-size:13.5px; color:var(--text-dim); margin-bottom:8px; display:flex; gap:8px;}
+  .info-box li::before{content:'•'; color:var(--green);}
+
+  /* CONTACT / FOOTER */
+  footer{padding:70px 0 50px; border-top:1px solid var(--line);}
+  .contact-term{
+    background:var(--bg-raised); border:1px solid var(--line); border-radius:10px; padding:30px 30px 26px;
+    font-family:var(--mono);
+  }
+  .contact-links{display:flex; flex-wrap:wrap; gap:14px; margin-top:20px;}
+  .clink{
+    display:flex; align-items:center; gap:9px; font-size:13.5px; color:var(--text-dim);
+    border:1px solid var(--line); padding:10px 15px; border-radius:7px; background:var(--surface);
+    transition:all .2s;
+  }
+  .clink:hover{color:var(--green); border-color:var(--green);}
+  .clink svg{width:15px;height:15px;stroke:currentColor;}
+  .foot-note{margin-top:36px; font-family:var(--mono); font-size:11.5px; color:var(--text-faint); text-align:center;}
+
+  .reveal{opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease;}
+  .reveal.show{opacity:1; transform:translateY(0);}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important;}
+  }
+
+  :focus-visible{outline:2px solid var(--green); outline-offset:3px;}
+</style>
+</head>
+<body>
+<div class="grid-overlay"></div>
+
+<header>
+  <nav>
+    <div class="brand"><span class="dot"></span>dhairya@panchal</div>
+    <div class="navlinks">
+      <a href="#about">about</a>
+      <a href="#experience">experience</a>
+      <a href="#projects">projects</a>
+      <a href="#skills">skills</a>
+      <a href="#contact">contact</a>
+    </div>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-kicker"><span class="bar"></span>SYSTEM ONLINE · UPTIME 99.9%</div>
+    <div class="terminal">
+      <div class="term-bar">
+        <span></span><span></span><span></span>
+        <span class="term-title">dhairya@ahmedabad: ~/portfolio</span>
+      </div>
+      <div class="term-body">
+        <div class="term-line"><span class="prompt">➜</span> <span class="path">~</span> whoami</div>
+        <div class="hero-name">Dhairya N. Panchal</div>
+        <div class="hero-role">RHCSA-certified <span class="accent">Linux &amp; DevOps engineer</span> — building CI/CD pipelines, hardening infrastructure, and keeping systems at 99%+ uptime across AWS &amp; Azure.<span class="cursor"></span></div>
+        <div class="hero-meta">
+          <div class="chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c-4.4-4.4-7-8-7-11a7 7 0 0 1 14 0c0 3-2.6 6.6-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+            Ahmedabad, Gujarat, India
+          </div>
+          <div class="chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+            RHCSA Certified
+          </div>
+          <div class="chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            Open to SRE / DevOps roles
+          </div>
+        </div>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="mailto:panchaldhairya2005@gmail.com">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6l-10 7L2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>
+            Get in touch
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/panchaldhairya16" target="_blank" rel="noopener">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.9c0-1.1.4-1.8 1-2.4-3.3-.4-6.8-1.6-6.8-7.3 0-1.6.6-3 1.5-4-.2-.4-.6-2 .2-4 0 0 1.3-.4 4.2 1.5a14.4 14.4 0 0 1 7.6 0c2.9-2 4.2-1.5 4.2-1.5.8 2 .3 3.6.2 4 1 1 1.5 2.4 1.5 4 0 5.7-3.5 6.9-6.8 7.3.5.5 1 1.4 1 2.9V21" transform="scale(0.85) translate(2,2)"/></svg>
+            View GitHub
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about" class="reveal">
+    <div class="section-head">
+      <div class="eyebrow">cat about.conf</div>
+      <h2>about<span class="dim">.conf</span></h2>
+    </div>
+    <div class="about-box">
+      <div class="comment"># profile configuration</div>
+      <div><span class="key">role</span> = <span class="val">"Linux System Administrator"</span></div>
+      <div><span class="key">focus</span> = <span class="val">["DevOps", "SRE", "Cloud Infrastructure"]</span></div>
+      <div><span class="key">stack</span> = <span class="val">["RHEL/Ubuntu", "AWS", "Azure", "Docker/Podman"]</span></div>
+      <p>I administer and harden Linux systems, ship containerized applications, and build CI/CD pipelines that turn manual deployments into zero-touch releases. My work sits at the intersection of system administration and DevOps — access control and firewall hardening on one side, Jenkins pipelines and cloud provisioning on the other. Currently pursuing a B.Sc. in Cloud &amp; Application Development while working full-time, with a goal of driving scalable, resilient systems at Google-scale.</p>
+    </div>
+  </section>
+
+  <!-- EXPERIENCE -->
+  <section id="experience" class="reveal">
+    <div class="section-head">
+      <div class="eyebrow">systemctl status --all</div>
+      <h2>experience<span class="dim">.log</span></h2>
+    </div>
+
+    <div class="svc">
+      <div class="svc-head">
+        <div class="svc-title-wrap">
+          <span class="svc-dot active"></span>
+          <span class="svc-name">electromech-cloudtech.service <span class="svc-org">— Linux System Administrator</span></span>
+        </div>
+        <span class="svc-status active">active (running)</span>
+      </div>
+      <div class="svc-meta">Loaded: Ahmedabad, India · Since: Sept 2024 · Enabled: yes</div>
+      <div class="svc-log">
+        <div class="log-line">Administered RHEL/Ubuntu systems across 50+ user environments; enforced file permissions, group policies, and access controls — reduced unauthorized access via SSH/firewalld hardening.</div>
+        <div class="log-line">Deployed containerized web apps on Azure VMs using Podman with port mapping and NSG configuration, replicating production-grade cloud workflows.</div>
+        <div class="log-line">Performed proactive log analysis, IP routing, and troubleshooting — maintained 99%+ uptime across all managed infrastructure.</div>
+      </div>
+    </div>
+
+    <div class="svc">
+      <div class="svc-head">
+        <div class="svc-title-wrap">
+          <span class="svc-dot done"></span>
+          <span class="svc-name">stellarmind-ai.service <span class="svc-org">— DevOps Intern</span></span>
+        </div>
+        <span class="svc-status done">exited (0)</span>
+      </div>
+      <div class="svc-meta">Loaded: Ahmedabad, India · Active: Feb 2025 – May 2025</div>
+      <div class="svc-log">
+        <div class="log-line">Engineered CI/CD pipelines using Jenkins and GitHub Actions, reducing manual deployment effort and accelerating delivery cycles.</div>
+        <div class="log-line">Managed containerized environments via Docker/Podman for consistent dev-to-production deployments.</div>
+        <div class="log-line">Monitored and optimized AWS infrastructure (EC2, S3, VPC), contributing to cost reduction through right-sizing.</div>
+        <div class="log-line">Authored Bash scripts to automate repetitive sysadmin and deployment tasks, improving team efficiency.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section id="projects" class="reveal">
+    <div class="section-head">
+      <div class="eyebrow">ls -la ~/projects</div>
+      <h2>projects<span class="dim">/</span></h2>
+    </div>
+    <div class="filelist">drwxr-xr-x  3 dhairya  staff  — 3 items</div>
+    <div class="proj-grid">
+      <div class="proj-card">
+        <div class="proj-top">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span class="proj-file">deploy-pipeline.yml</span>
+        </div>
+        <div class="proj-name">CI/CD Deployment Platform<br>Jenkins &amp; Azure App Service</div>
+        <div class="proj-desc">Production-style pipeline wiring GitHub webhooks → Jenkins → Azure App Service for zero-touch deployments on every push, eliminating manual steps across the test-build-deploy cycle.</div>
+        <div class="tag-row">
+          <span class="tag">Jenkins</span><span class="tag">GitHub</span><span class="tag">Azure</span><span class="tag">CI/CD</span>
+        </div>
+      </div>
+
+      <div class="proj-card">
+        <div class="proj-top">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          <span class="proj-file">podman-vm-host.sh</span>
+        </div>
+        <div class="proj-name">Containerized Website Hosting<br>on Azure VM with Podman</div>
+        <div class="proj-desc">Provisioned an Azure VM, configured NSG rules and firewall policies, and deployed a containerized static site with public IP access — full end-to-end infrastructure ownership.</div>
+        <div class="tag-row">
+          <span class="tag">Linux</span><span class="tag">Podman</span><span class="tag">Azure</span><span class="tag">Networking</span>
+        </div>
+      </div>
+
+      <div class="proj-card">
+        <div class="proj-top">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <span class="proj-file">tech-meet/</span>
+        </div>
+        <div class="proj-name">Tech-Meet<br>Full-Stack Event Management System</div>
+        <div class="proj-desc">Full-stack platform with CRUD operations, input validation, and a normalized MySQL relational schema to manage college events at scale.</div>
+        <div class="tag-row">
+          <span class="tag">PHP</span><span class="tag">MySQL</span><span class="tag">JavaScript</span><span class="tag">HTML/CSS</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SKILLS -->
+  <section id="skills" class="reveal">
+    <div class="section-head">
+      <div class="eyebrow">apt list --installed</div>
+      <h2>skills<span class="dim">.pkg</span></h2>
+    </div>
+    <div class="skill-groups">
+      <div class="skill-box">
+        <h3>cloud &amp; devops</h3>
+        <div class="pkg-list">
+          <span class="pkg">AWS (EC2/S3/VPC/IAM)</span>
+          <span class="pkg">Azure (VM/App Service/NSG)</span>
+          <span class="pkg">CI/CD Pipelines</span>
+          <span class="pkg">Docker</span>
+          <span class="pkg">Podman</span>
+        </div>
+      </div>
+      <div class="skill-box">
+        <h3>system administration</h3>
+        <div class="pkg-list">
+          <span class="pkg">RHEL 9 / Ubuntu</span>
+          <span class="pkg">SSH Hardening</span>
+          <span class="pkg">firewalld / iptables</span>
+          <span class="pkg">User &amp; Group Mgmt</span>
+          <span class="pkg">Log Analysis</span>
+        </div>
+      </div>
+      <div class="skill-box">
+        <h3>programming &amp; scripting</h3>
+        <div class="pkg-list">
+          <span class="pkg">Bash</span>
+          <span class="pkg">Python</span>
+          <span class="pkg">PHP</span>
+        </div>
+      </div>
+      <div class="skill-box">
+        <h3>networking &amp; tools</h3>
+        <div class="pkg-list">
+          <span class="pkg">TCP/IP</span>
+          <span class="pkg">DNS</span>
+          <span class="pkg">Routing</span>
+          <span class="pkg">Git / GitHub</span>
+          <span class="pkg">Jenkins</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CERTIFICATIONS -->
+  <section id="certs" class="reveal">
+    <div class="section-head">
+      <div class="eyebrow">gpg --verify certs.asc</div>
+      <h2>certifications</h2>
+    </div>
+    <div class="cert-row">
+      <div class="cert">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M9 14l-2 8 5-3 5 3-2-8"/></svg>
+        RHCSA — Red Hat Certified System Administrator
+      </div>
+      <div class="cert">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M9 14l-2 8 5-3 5 3-2-8"/></svg>
+        AWS Academy Graduate — Cloud Foundations
+      </div>
+      <div class="cert">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M9 14l-2 8 5-3 5 3-2-8"/></svg>
+        AWS Basics — KodeKloud
+      </div>
+      <div class="cert">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M9 14l-2 8 5-3 5 3-2-8"/></svg>
+        Practical Intro to Cloud Computing — EC-Council
+      </div>
+    </div>
+  </section>
+
+  <!-- EDUCATION + COMMUNITY -->
+  <section id="edu" class="reveal">
+    <div class="section-head">
+      <div class="eyebrow">cat education.yml community.yml</div>
+      <h2>education &amp; community</h2>
+    </div>
+    <div class="split">
+      <div class="info-box">
+        <h3>Gujarat University</h3>
+        <div class="sub">B.Sc. IT — Cloud and Application Development</div>
+        <div class="when">2023 – Present · Semester 6</div>
+      </div>
+      <div class="info-box">
+        <h3>Volunteer Work</h3>
+        <ul>
+          <li>AWS Community Ahmedabad — organizes meetups &amp; workshops on AWS cloud technologies</li>
+          <li>Elastic Ahmedabad — facilitates community sessions on search &amp; observability tooling</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <footer id="contact" class="reveal">
+    <div class="section-head">
+      <div class="eyebrow">ping dhairya --contact</div>
+      <h2>let's connect</h2>
+    </div>
+    <div class="contact-term">
+      <div class="term-line"><span class="prompt">➜</span> <span class="path">~</span> echo $CONTACT_INFO</div>
+      <div class="term-out">Reachable via email, phone, or the usual dev platforms. Open to SRE / DevOps opportunities.</div>
+      <div class="contact-links">
+        <a class="clink" href="mailto:panchaldhairya2005@gmail.com">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>
+          panchaldhairya2005@gmail.com
+        </a>
+        <a class="clink" href="tel:+917016441927">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.5 2.1L8 9.7a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.7 2z"/></svg>
+          +91 70164-41927
+        </a>
+        <a class="clink" href="https://linkedin.com/in/dhairyapanchal" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/><path d="M10 9v12M10 13a4 4 0 0 1 8 0v8"/></svg>
+          linkedin.com/in/dhairyapanchal
+        </a>
+        <a class="clink" href="https://github.com/panchaldhairya16" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.9c0-1.1.4-1.8 1-2.4-3.3-.4-6.8-1.6-6.8-7.3 0-1.6.6-3 1.5-4-.2-.4-.6-2 .2-4 0 0 1.3-.4 4.2 1.5a14.4 14.4 0 0 1 7.6 0c2.9-2 4.2-1.5 4.2-1.5.8 2 .3 3.6.2 4 1 1 1.5 2.4 1.5 4 0 5.7-3.5 6.9-6.8 7.3.5.5 1 1.4 1 2.9V21"/></svg>
+          github.com/panchaldhairya16
+        </a>
+        <a class="clink" href="#top" onclick="return false;">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          Ahmedabad, Gujarat, India
+        </a>
+      </div>
+    </div>
+    <div class="foot-note">© 2026 Dhairya Panchal · exit code 0 · built with vanilla HTML/CSS/JS, no framework required</div>
+  </footer>
+
+</main>
+
+<script>
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('show');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  revealEls.forEach(el => io.observe(el));
+</script>
+
+</body>
+</html>
